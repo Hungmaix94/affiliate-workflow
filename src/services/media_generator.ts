@@ -8,6 +8,7 @@ interface MediaGenInput {
   influencerName: string;
   productImage?: string;
   comfyApiUrl?: string;
+  veoPrompt?: string;
 }
 
 export async function generateMedia(input: MediaGenInput) {
@@ -34,7 +35,8 @@ export async function generateMedia(input: MediaGenInput) {
     let videoUrl = "assets/temp_broll.png";
     try {
       const { execSync } = await import('child_process');
-      const veoPrompt = `A young Vietnamese female vlogger review product, photorealistic, natural lighting, talking to camera, ${input.script.substring(0, 100)}`;
+      const veoPrompt = input.veoPrompt || `A young Vietnamese female vlogger review product, photorealistic, natural lighting, talking to camera, ${input.script.substring(0, 100)}`;
+      console.log(`[Cinematico-Media] Sử dụng prompt Veo 3: "${veoPrompt}"`);
       execSync(`python3 src/services/veo_generator.py "${veoPrompt.replace(/"/g, '\\"')}"`);
       console.log(`[Cinematico-Media] Video B-Roll đã được sinh tại: ${videoUrl}`);
     } catch (err: any) {

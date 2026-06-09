@@ -96,7 +96,8 @@ async function main() {
           script: copywriterOutput.script,
           influencerName: "Khánh Linh",
           productImage: scraperOutput.images[0],
-          comfyApiUrl: comfyApiUrl
+          comfyApiUrl: comfyApiUrl,
+          veoPrompt: copywriterOutput.veo_prompt
         });
 
         if (!genResult.success) {
@@ -124,7 +125,8 @@ async function main() {
       const genResult = await generateMedia({
         script: copywriterOutput.script,
         influencerName: "Khánh Linh",
-        productImage: scraperOutput.images[0]
+        productImage: scraperOutput.images[0],
+        veoPrompt: copywriterOutput.veo_prompt
       });
 
       if (!genResult.success) {
