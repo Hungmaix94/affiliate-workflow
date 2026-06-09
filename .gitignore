@@ -1,14 +1,59 @@
 # Dependencies
 node_modules/
+jspm_packages/
+web_modules/
 
-# Local Environment
+# Python Virtual Environments & Packages
+.venv/
+venv/
+env/
+ENV/
+dist/
+build/
+eggs/
+.eggs/
+parts/
+bin/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+*.egg-info/
+*.egg
+
+# Python Caches & Compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.coverage
+htmlcov/
+.dmypy.json
+dmypy.json
+
+# Local Environment & Secrets
 .env
 .env.local
 .env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+*.key
 
-# Build outputs
+# TypeScript / JS Build outputs & caches
 dist/
 build/
+out/
+.tsbuildinfo
+.eslintcache
+
+# Large Model files (ONNX models, checkpoints)
+models/
+checkpoints/
 
 # Temporary generated assets
 assets/generated_*
@@ -20,6 +65,10 @@ assets/croissant.png
 
 # IDE / System files
 .DS_Store
+Thumbs.db
 .idea/
 .vscode/
 *.log
+.pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
