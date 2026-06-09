@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Local Environment
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+dist/
+build/
+
+# Temporary generated assets
+assets/generated_*
+assets/temp_*
+assets/test_*
+assets/influencer_face.png
+assets/influencer_talking.mp4
+assets/croissant.png
+
+# IDE / System files
+.DS_Store
+.idea/
+.vscode/
+*.log

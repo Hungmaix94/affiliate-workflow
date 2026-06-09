@@ -1,0 +1,26 @@
+{
+  "autopilots": [
+    {
+      "name": "daily-affiliate-pipeline",
+      "description": "Tự động quét sản phẩm hot, tạo kịch bản, sinh video AI với Virtual Influencer và tự động đăng tải lên mạng xã hội hàng ngày.",
+      "schedule": "0 8 * * *",
+      "steps": [
+        {
+          "name": "scrape-trending-products",
+          "command": "npm run scrape -- --hot-trending",
+          "timeout": "10m"
+        },
+        {
+          "name": "generate-ai-videos",
+          "command": "npm run generate-media",
+          "timeout": "20m"
+        },
+        {
+          "name": "publish-to-socials",
+          "command": "npm run publish",
+          "timeout": "10m"
+        }
+      ]
+    }
+  ]
+}

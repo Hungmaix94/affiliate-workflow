@@ -1,0 +1,30 @@
+{
+  "name": "affiliate-workflow",
+  "version": "1.0.0",
+  "description": "AI Agent affiliate marketing workflow automation system",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "scrape": "tsx src/services/product_scraper.ts",
+    "generate-media": "tsx src/services/media_generator.ts",
+    "publish": "tsx src/services/social_publisher.ts",
+    "autopilot": "tsx src/index.ts",
+    "gpu-control": "tsx src/services/gpu_controller.ts"
+  },
+  "dependencies": {
+    "@alicloud/ecs20140526": "^7.8.3",
+    "@alicloud/openapi-client": "^0.4.15",
+    "dotenv": "^16.4.5",
+    "playwright": "^1.44.1",
+    "yaml": "^2.4.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "tsx": "^4.7.2",
+    "typescript": "^5.4.5"
+  }
+}
