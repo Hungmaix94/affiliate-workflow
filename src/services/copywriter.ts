@@ -1,7 +1,6 @@
+import { execFileSync } from 'child_process';
 import dotenv from 'dotenv';
 dotenv.config();
-
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 interface CopywritingInput {
   productName: string;
@@ -12,14 +11,7 @@ interface CopywritingInput {
 export async function generateCopywriting(input: CopywritingInput): Promise<{ caption: string; script: string }> {
   console.log(`[Vinci-Writer] Đang soạn nội dung tiếp thị cho sản phẩm: "${input.productName}"`);
 
-  const hasRealGemini = GEMINI_API_KEY && !GEMINI_API_KEY.startsWith('mock') && GEMINI_API_KEY.trim() !== '';
-
-  if (hasRealGemini) {
-    console.log(`[Vinci-Writer] Phát hiện GEMINI_API_KEY. Đang gửi yêu cầu đến Gemini API...`);
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-      
-      const prompt = `Hãy viết caption bán hàng ngắn gọn thu hút và kịch bản video review 30-45 giây (Hook -> Painpoint -> Solution -> CTA) cho sản phẩm sau bằng Tiếng Việt.
+  const prompt = `Hãy viết caption bán hàng ngắn gọn thu hút và kịch bản video review 30-45 giây (Hook -> Painpoint -> Solution -> CTA) cho sản phẩm sau bằng Tiếng Việt.
 Tên sản phẩm: ${input.productName}
 Mô tả: ${input.description}
 Giá bán: ${input.price}
@@ -30,46 +22,28 @@ Trả về DUY NHẤT một chuỗi JSON có cấu trúc chính xác như sau, k
   "script": "nội dung kịch bản..."
 }`;
 
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{ text: prompt }]
-          }]
-        })
-      });
+  try {
+    console.log(`[Vinci-Writer] Đang gửi yêu cầu sinh nội dung qua agy CLI...`);
+    const stdout = execFileSync('agy', ['--print', prompt], { encoding: 'utf8' });
+    let text = stdout.trim();
 
-      if (!response.ok) {
-        throw new Error(`Gemini API HTTP Error ${response.status}: ${await response.text()}`);
-      }
-
-      const resData = await response.json();
-      let text = resData?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
-
-      // Loại bỏ markdown code blocks nếu có
-      if (text.startsWith('```')) {
-        text = text.replace(/^```json\s*/, '').replace(/```$/, '').trim();
-      }
-
-      const parsed = JSON.parse(text);
-      if (parsed.caption && parsed.script) {
-        console.log(`[Vinci-Writer] ✅ Đã sinh nội dung tiếp thị thành công từ Gemini API.`);
-        return {
-          caption: parsed.caption,
-          script: parsed.script
-        };
-      } else {
-        throw new Error('Dữ liệu trả về thiếu trường caption hoặc script');
-      }
-
-    } catch (error: any) {
-      console.warn(`[Vinci-Writer] ⚠️ Thất bại khi gọi Gemini API (${error.message}). Tự động sử dụng bộ sinh Template Fallback.`);
+    // Loại bỏ markdown code blocks nếu có
+    if (text.startsWith('```')) {
+      text = text.replace(/^```json\s*/, '').replace(/```\s*$/, '').trim();
     }
-  } else {
-    console.log(`[Vinci-Writer] Sử dụng chế độ mô phỏng / Không có API Key thật. Tự động sử dụng bộ sinh Template Fallback.`);
+
+    const parsed = JSON.parse(text);
+    if (parsed.caption && parsed.script) {
+      console.log(`[Vinci-Writer] ✅ Đã sinh nội dung tiếp thị thành công từ agy CLI.`);
+      return {
+        caption: parsed.caption,
+        script: parsed.script
+      };
+    } else {
+      throw new Error('Dữ liệu trả về thiếu trường caption hoặc script');
+    }
+  } catch (error: any) {
+    console.warn(`[Vinci-Writer] ⚠️ Thất bại khi sinh nội dung qua agy CLI (${error.message}). Tự động sử dụng bộ sinh Template Fallback.`);
   }
 
   // Fallback template-based copy generation

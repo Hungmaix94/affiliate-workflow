@@ -1,19 +1,12 @@
 import time
 import os
-from google import genai
-from google.genai import types
 from dotenv import load_dotenv
 
 load_dotenv()
 
 class VeoGenerator:
     def __init__(self):
-        # Initialize client. The client will load the API key or application credentials from the environment.
-        api_key = os.getenv("GEMINI_API_KEY")
-        if api_key:
-            self.client = genai.Client(api_key=api_key)
-        else:
-            self.client = genai.Client()
+        pass
 
     def generate_product_video(self, prompt: str, output_path: str = "assets/temp_broll.png") -> str:
         """
