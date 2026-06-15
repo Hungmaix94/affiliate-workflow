@@ -141,9 +141,22 @@ async function main() {
       console.log(`[Cinematico-Media] Đã sinh xong video với khuôn mặt Influencer đồng nhất & lồng tiếng.`);
     }
 
-    console.log('\nStep 4: Giao việc cho Publi (social-publisher) để xuất bản bài viết...');
+    console.log('\nStep 4: Chuẩn bị tệp đa phương tiện công khai (Public URL)...');
+    let publicVideoUrl = mediaOutput.videoUrl;
+    if (publicVideoUrl && !publicVideoUrl.startsWith('http://') && !publicVideoUrl.startsWith('https://')) {
+      console.log(`[Aegis-Affiliate] Phát hiện video local: "${publicVideoUrl}". Đang upload lên Cloudflare R2...`);
+      try {
+        const { uploadFileToR2 } = await import('./services/r2_storage.js');
+        publicVideoUrl = await uploadFileToR2(publicVideoUrl);
+        console.log(`[Aegis-Affiliate] ✅ Upload lên Cloudflare R2 thành công. Public URL: ${publicVideoUrl}`);
+      } catch (err: any) {
+        console.error(`[Aegis-Affiliate] ❌ Lỗi upload video lên R2: ${err.message}. Sẽ tiếp tục dùng đường dẫn local.`);
+      }
+    }
+
+    console.log('\nStep 5: Giao việc cho Publi (social-publisher) để xuất bản bài viết...');
     const publishResult = await publishPost({
-      videoUrl: mediaOutput.videoUrl,
+      videoUrl: publicVideoUrl,
       caption: copywriterOutput.caption,
       platforms: ['tiktok', 'facebook']
     });

@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import { uploadFileToR2 } from './r2_storage.js';
 dotenv.config();
 
 const INTEGRATION_API_URL = process.env.SOCIAL_INTEGRATION_API_URL || 'http://localhost:5000/api/posts';
@@ -13,6 +14,17 @@ export async function publishPost(input: PostInput) {
   console.log(`[Publi] Bắt đầu quá trình xuất bản lên các mạng xã hội: ${input.platforms.join(', ')}`);
   console.log(`[Publi] Caption: "${input.caption}"`);
   console.log(`[Publi] Media: ${input.videoUrl}`);
+
+  let finalVideoUrl = input.videoUrl;
+  if (finalVideoUrl && !finalVideoUrl.startsWith('http://') && !finalVideoUrl.startsWith('https://')) {
+    console.log(`[Publi] Phát hiện video local: "${finalVideoUrl}". Đang tự động upload lên Cloudflare R2...`);
+    try {
+      finalVideoUrl = await uploadFileToR2(finalVideoUrl);
+      console.log(`[Publi] ✅ Upload lên R2 thành công. Public URL: ${finalVideoUrl}`);
+    } catch (err: any) {
+      console.error(`[Publi] ❌ Lỗi upload video lên R2: ${err.message}. Sẽ tiếp tục sử dụng đường dẫn local.`);
+    }
+  }
 
   const results = [];
 
@@ -32,7 +44,7 @@ export async function publishPost(input: PostInput) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              file_url: input.videoUrl,
+              file_url: finalVideoUrl,
               description: input.caption,
               access_token: pageToken
             })
@@ -61,7 +73,7 @@ export async function publishPost(input: PostInput) {
               'Access-Token': tiktokToken
             },
             body: JSON.stringify({
-              video_url: input.videoUrl,
+              video_url: finalVideoUrl,
               text: input.caption
             })
           });
@@ -111,10 +123,18 @@ export async function publishPost(input: PostInput) {
 
 // Chạy thử độc lập
 if (process.argv.includes('--run')) {
+  const videoUrlIdx = process.argv.indexOf('--videoUrl');
+  const captionIdx = process.argv.indexOf('--caption');
+  const platformsIdx = process.argv.indexOf('--platforms');
+
+  const videoUrl = videoUrlIdx !== -1 ? process.argv[videoUrlIdx + 1] : "https://assets.mixkit.co/videos/preview/mixkit-vlogger-filming-a-food-review-with-camera-41614-large.mp4";
+  const caption = captionIdx !== -1 ? process.argv[captionIdx + 1] : "Bánh sừng bò Pháp siêu ngon giòn rụm! #affiliate #foodie";
+  const platforms = platformsIdx !== -1 ? process.argv[platformsIdx + 1].split(',') : ['tiktok', 'facebook'];
+
   publishPost({
-    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-vlogger-filming-a-food-review-with-camera-41614-large.mp4",
-    caption: "Bánh sừng bò Pháp siêu ngon giòn rụm! #affiliate #foodie",
-    platforms: ['tiktok', 'facebook', 'instagram']
+    videoUrl,
+    caption,
+    platforms
   }).then(res => {
     console.log('\n[Publisher Output]:', JSON.stringify(res, null, 2));
   });

@@ -12,11 +12,15 @@
     "generate-media": "tsx src/services/media_generator.ts",
     "publish": "tsx src/services/social_publisher.ts",
     "autopilot": "tsx src/index.ts",
-    "gpu-control": "tsx src/services/gpu_controller.ts"
+    "gpu-control": "tsx src/services/gpu_controller.ts",
+    "mcp": "tsx src/mcp_server.ts",
+    "run-agent": "python3 src/agents/affiliate_agent.py"
   },
   "dependencies": {
     "@alicloud/ecs20140526": "^7.8.3",
     "@alicloud/openapi-client": "^0.4.15",
+    "@aws-sdk/client-s3": "^3.1064.0",
+    "@modelcontextprotocol/sdk": "^1.4.0",
     "dotenv": "^16.4.5",
     "playwright": "^1.44.1",
     "yaml": "^2.4.5",

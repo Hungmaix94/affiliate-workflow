@@ -1,0 +1,11 @@
+file '/home/phamhung/Work/Outsource/affiliate-workflow/assets/influencer_face.png'
+duration 10.0
+file '/home/phamhung/Work/Outsource/affiliate-workflow/assets/drill_review_broll.png'
+duration 20.0
+file '/home/phamhung/Work/Outsource/affiliate-workflow/assets/drill_closeup_dial.png'
+duration 20.0
+file '/home/phamhung/Work/Outsource/affiliate-workflow/assets/drill_action_wood.png'
+duration 25.0
+file '/home/phamhung/Work/Outsource/affiliate-workflow/assets/influencer_three_quarters.png'
+duration 15.0
+file '/home/phamhung/Work/Outsource/affiliate-workflow/assets/influencer_three_quarters.png'

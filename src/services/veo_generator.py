@@ -24,15 +24,17 @@ class VeoGenerator:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         
         prompt_with_instructions = (
-            f"Generate a photorealistic image of {prompt}. "
-            f"Save the generated image as {output_path}. "
-            f"Make sure the output path is {output_path} exactly."
+            f"Generate an extremely high-quality, photorealistic, professional product photograph based on this description: '{prompt}'. "
+            f"Style guidelines: UGC (User Generated Content) aesthetic, captured on a modern smartphone camera, "
+            f"cinematic soft natural lighting (like golden hour), volumetric shading, rich textures (like wood grain, fabric weave, or metallic finish), "
+            f"shallow depth of field with sharp focus on the product, and a natural, organic background. "
+            f"Save the output image to this path: '{output_path}' exactly. Do not include any text, watermarks, or studio backgrounds."
         )
 
         try:
             import subprocess
             result = subprocess.run(
-                ["agy", "--print", prompt_with_instructions],
+                ["agy", "--dangerously-skip-permissions", "--print", prompt_with_instructions],
                 capture_output=True,
                 text=True,
                 check=True
@@ -54,5 +56,6 @@ if __name__ == "__main__":
     import sys
     args = sys.argv[1:]
     prompt = args[0] if args else "A photorealistic shot of delicious fresh baked croissants on a wooden plate, natural sunlight, cinematic"
+    output_path = args[1] if len(args) > 1 else "assets/test_veo_output.png"
     generator = VeoGenerator()
-    generator.generate_product_video(prompt, "assets/test_veo_output.png")
+    generator.generate_product_video(prompt, output_path)

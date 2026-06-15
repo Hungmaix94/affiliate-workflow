@@ -21,6 +21,18 @@
           "timeout": "10m"
         }
       ]
+    },
+    {
+      "name": "optimize-prompts-and-media",
+      "description": "Tác vụ chạy tối ưu hóa prompt chi tiết và sinh video/hình ảnh B-Roll chất lượng cao.",
+      "schedule": "0 10 * * *",
+      "steps": [
+        {
+          "name": "run-optimized-agent-pipeline",
+          "command": "npm run autopilot",
+          "timeout": "30m"
+        }
+      ]
     }
   ]
 }

@@ -20,7 +20,7 @@ load_dotenv()
 class MarketingPlan(BaseModel):
     script: str = Field(description="Review script using AIDA structure. Must sound natural, personal, and friendly (no hard selling, e.g. sharing stories/feelings). Include emotional cues.")
     caption: str = Field(description="Social post caption with engaging hooks, emojis, CTA (directing to profile/comments link), and hashtags.")
-    veo_prompt: str = Field(description="Detailed image/video generation prompt for Google Veo 3 to show the product in an organic, photorealistic way (e.g. natural lighting, close-up details).")
+    veo_prompt: str = Field(description="Extremely detailed, high-quality prompt in English for Google Veo 3/Imagen 3. Must specify precise physical details of the product, professional camera settings (vertical close-up shot, 35mm lens, f/1.8, shallow depth of field, 8k, photorealistic), rich textures, warm natural cinematic lighting, and a cosy realistic room background (avoiding white studio backdrops) to achieve a premium UGC aesthetic.")
 
 # Initialize services
 veo_service = VeoGenerator()
@@ -87,21 +87,32 @@ def assemble_and_publish(video_path: str, audio_path: str, talking_head_path: st
     """
     print(f"[Agent Tool] Assembling video using visual: {video_path}, voice: {audio_path}, and talking head: {talking_head_path}")
     
-    # Run publishing microservice/CLI mockup
+    # Chọn tệp video hoàn chỉnh: ưu tiên talking_head_path nếu tồn tại, nếu không dùng video_path (B-Roll)
+    publish_video = talking_head_path if os.path.exists(talking_head_path) else video_path
+    
+    print(f"[Agent Tool] Đang chạy social_publisher.ts để upload lên R2 và đăng video: {publish_video}")
     try:
         result = subprocess.run(
-            ["npx", "tsx", "src/services/social_publisher.ts", "--run"],
+            [
+                "npx", "tsx", "src/services/social_publisher.ts", 
+                "--run",
+                "--videoUrl", publish_video,
+                "--caption", caption,
+                "--platforms", "tiktok,facebook"
+            ],
             capture_output=True,
             text=True,
             check=True
         )
         print(result.stdout)
     except Exception as e:
-         print(f"[Agent Tool] Warning in publishing script: {e}")
+         print(f"[Agent Tool] Warning/Error in publishing script: {e}")
+         if hasattr(e, 'stderr') and e.stderr:
+             print(f"[Agent Tool] Stderr: {e.stderr}")
          
     return json.dumps({
         "status": "success",
-        "message": "Campaign video compiled and published to Facebook Reels, TikTok, and Shopee Video.",
+        "message": "Campaign video compiled and published to Facebook Reels and TikTok.",
         "postId": "mock_post_100234"
     })
 

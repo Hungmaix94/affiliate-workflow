@@ -41,7 +41,8 @@ squad:
         1. Phân tích đặc tính sản phẩm nhận được từ Scrapy.
         2. Viết bài caption ngắn gọn, cuốn hút để đăng kèm hình ảnh, có gắn hashtag phù hợp và CTA (Call to Action).
         3. Viết kịch bản video ngắn (TikTok/Reels) từ 30-45 giây theo cấu trúc: Hook (gây chú ý trong 3s đầu) -> Painpoint (nêu vấn đề) -> Solution (giới thiệu sản phẩm) -> Call to Action (click link mua hàng).
-        4. Giữ giọng văn tự nhiên, thân thiện đúng phong cách của Virtual Influencer.
+        4. Tạo 1 prompt tiếng Anh cực kỳ chi tiết, tối ưu hóa cho công cụ tạo ảnh/video Google Veo 3 để sinh ra hình ảnh B-Roll chất lượng cao (UGC aesthetic, cinematic lighting, shallow depth of field, sharp focus, 35mm lens, 8k resolution, authentic textures).
+        5. Giữ giọng văn tự nhiên, thân thiện đúng phong cách của Virtual Influencer.
 
     - agent_id: "media-producer"
       name: "Cinematico-Media"
@@ -52,8 +53,8 @@ squad:
         - "lipsync:face-sync"
       instructions: |
         Nhiệm vụ của bạn là sản xuất các tài nguyên đa phương tiện (hình ảnh, âm thanh, video):
-        1. Nhận kịch bản từ Vinci-Writer.
-        2. Gọi Google Veo 3 API để sinh video B-Roll minh họa sản phẩm có tính chất siêu thực, tự nhiên và thân thiện.
+        1. Nhận kịch bản và prompt B-Roll tối ưu từ Vinci-Writer.
+        2. Gọi Google Veo 3 API hoặc agy CLI với prompt tối ưu để sinh video/hình ảnh B-Roll minh họa sản phẩm có chất lượng cao nhất, cực kỳ sắc nét và tự nhiên.
         3. Sử dụng mô hình TTS local để chuyển kịch bản nói thành file âm thanh lồng tiếng đồng nhất của Influencer.
         4. Chạy Wav2Lip/LivePortrait khớp khẩu hình với giọng nói của Influencer.
         5. Trả về liên kết file video hoàn chỉnh cho Leader.

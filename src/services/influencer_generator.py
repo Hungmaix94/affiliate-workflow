@@ -47,6 +47,49 @@ class InfluencerGenerator:
 
         return self.face_path
 
+    def _upload_file(self, file_path: str) -> str:
+        """
+        Uploads a file to ComfyUI remote input directory via /upload/image endpoint.
+        Returns the filename on the server.
+        """
+        import uuid
+        import urllib.request
+        import json
+        import os
+        
+        filename = os.path.basename(file_path)
+        boundary = f"----WebKitFormBoundary{uuid.uuid4().hex}"
+        
+        with open(file_path, "rb") as f:
+            file_content = f.read()
+            
+        mime_type = "image/png" if filename.lower().endswith(".png") else "audio/wav" if filename.lower().endswith(".wav") else "application/octet-stream"
+        
+        parts = [
+            f"--{boundary}".encode('utf-8'),
+            f'Content-Disposition: form-data; name="image"; filename="{filename}"'.encode('utf-8'),
+            f'Content-Type: {mime_type}'.encode('utf-8'),
+            b'',
+            file_content,
+            f"--{boundary}--".encode('utf-8')
+        ]
+        
+        body = b'\r\n'.join(parts)
+        headers = {
+            'Content-Type': f'multipart/form-data; boundary={boundary}',
+            'Content-Length': str(len(body))
+        }
+        
+        upload_url = f"{self.comfy_api_url}/upload/image"
+        print(f"[Influencer] Uploading {filename} to ComfyUI ({upload_url})...")
+        
+        req = urllib.request.Request(upload_url, data=body, headers=headers)
+        with urllib.request.urlopen(req, timeout=30) as response:
+            res = json.loads(response.read().decode())
+            uploaded_name = res.get("name")
+            print(f"[Influencer] Uploaded successfully as: {uploaded_name}")
+            return uploaded_name
+
     def run_lipsync_liveportrait(self, audio_path: str, output_video_path: str = "assets/influencer_talking.mp4") -> str:
         """
         Animate the influencer face to match the voiceover audio using LivePortrait / Wav2Lip
@@ -60,7 +103,7 @@ class InfluencerGenerator:
         print(f"[Influencer] Running LipSync. Face: {face_img}, Audio: {audio_path}")
         
         os.makedirs(os.path.dirname(output_video_path), exist_ok=True)
-
+ 
         # 1. ComfyUI API Workflow Integration
         # We send a POST request with the JSON workflow containing LivePortrait / Wav2Lip nodes
         comfy_workflow = {
@@ -86,8 +129,16 @@ class InfluencerGenerator:
                 }
             }
         }
-
+ 
         try:
+            # 1.1 Upload inputs to remote ComfyUI (necessary for Google Colab/remote setups)
+            uploaded_face = self._upload_file(face_img)
+            uploaded_audio = self._upload_file(audio_path)
+            
+            # 1.2 Update workflow inputs with the uploaded filenames
+            comfy_workflow["3"]["inputs"]["image"] = uploaded_face
+            comfy_workflow["12"]["inputs"]["driving_audio"] = uploaded_audio
+            
             print(f"[Influencer] Sending workflow queue request to ComfyUI at {self.comfy_api_url}...")
             data = json.dumps({"prompt": comfy_workflow}).encode('utf-8')
             req = urllib.request.Request(
@@ -95,14 +146,72 @@ class InfluencerGenerator:
                 data=data, 
                 headers={'Content-Type': 'application/json'}
             )
-            with urllib.request.urlopen(req, timeout=5) as response:
+            prompt_id = None
+            with urllib.request.urlopen(req, timeout=10) as response:
                 res = json.loads(response.read().decode())
-                print(f"[Influencer] ComfyUI Prompt queued. Prompt ID: {res.get('prompt_id')}")
-                # In production, we would poll the ComfyUI history/history API to wait for completion and download the output
-                return output_video_path
+                prompt_id = res.get("prompt_id")
+                print(f"[Influencer] ComfyUI Prompt queued. Prompt ID: {prompt_id}")
+                
+            if not prompt_id:
+                raise ValueError("Failed to retrieve prompt_id from ComfyUI response.")
+                
+            # 1.3 Poll ComfyUI history endpoint to wait for completion
+            import time
+            max_attempts = 60
+            filename = None
+            subfolder = ""
+            file_type = "output"
+            
+            print(f"[Influencer] Polling for task execution completion...")
+            for attempt in range(1, max_attempts + 1):
+                time.sleep(3)
+                history_url = f"{self.comfy_api_url}/history/{prompt_id}"
+                try:
+                    req_history = urllib.request.Request(history_url)
+                    with urllib.request.urlopen(req_history, timeout=10) as response_history:
+                        history_res = json.loads(response_history.read().decode())
+                        
+                    if prompt_id in history_res:
+                        print(f"[Influencer] Execution completed in attempt {attempt}!")
+                        prompt_history = history_res[prompt_id]
+                        outputs = prompt_history.get("outputs", {})
+                        
+                        # Find the output video/image/gif file
+                        for node_id, node_output in outputs.items():
+                            for key in ["gifs", "images", "videos"]:
+                                if key in node_output and len(node_output[key]) > 0:
+                                    file_info = node_output[key][0]
+                                    filename = file_info.get("filename")
+                                    subfolder = file_info.get("subfolder", "")
+                                    file_type = file_info.get("type", "output")
+                                    break
+                            if filename:
+                                break
+                        break
+                    else:
+                        print(f"[Influencer] Polling... Attempt {attempt}/{max_attempts}")
+                except Exception as ex:
+                    print(f"[Influencer] Polling error in attempt {attempt}: {ex}")
+                    
+            if not filename:
+                raise TimeoutError("ComfyUI task timed out or failed to produce output files.")
+                
+            # 1.4 Download the result file
+            view_url = f"{self.comfy_api_url}/view?filename={filename}&subfolder={subfolder}&type={file_type}"
+            print(f"[Influencer] Downloading lipsynced video from {view_url}...")
+            req_view = urllib.request.Request(view_url)
+            with urllib.request.urlopen(req_view, timeout=60) as response_view:
+                video_data = response_view.read()
+                
+            with open(output_video_path, "wb") as f:
+                f.write(video_data)
+                
+            print(f"[Influencer] ✅ Remote ComfyUI lipsync video saved to: {output_video_path}")
+            return output_video_path
+            
         except Exception as e:
             print(f"[Influencer] ComfyUI connection failed: {e}. Executing local fallback command...")
-
+ 
         # 2. Local CLI Command Fallback (e.g. Wav2Lip command line runner)
         try:
             print("[Influencer] Executing local Wav2Lip python process...")
@@ -112,7 +221,7 @@ class InfluencerGenerator:
             print(f"[Influencer] Wav2Lip execution failed: {e}. Creating mock talking video.")
             with open(output_video_path, "wb") as f:
                 f.write(b"Mock MP4 video data")
-
+ 
         print(f"[Influencer] ✅ Talking video ready at: {output_video_path}")
         return output_video_path
 
