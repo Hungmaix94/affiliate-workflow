@@ -26,7 +26,7 @@ export async function generateMedia(input: MediaGenInput) {
 
     // 1. Gửi prompt sinh video/B-roll qua veo_generator.py
     console.log(`[Cinematico-Media] Bước 1: Đang gửi kịch bản đến veo_generator.py...`);
-    let videoUrl = "assets/temp_broll.png";
+    let videoUrl = "assets/temp_broll.mp4";
     try {
       const veoPrompt = input.veoPrompt || `An extremely detailed close-up shot of the product, showcasing textures and design details, resting on a rustic wooden table with warm, natural side lighting, shallow depth of field, shot on a 35mm lens, photorealistic 8k, professional UGC aesthetic, softly blurred home room background. Context: ${input.script.substring(0, 100)}`;
       console.log(`[Cinematico-Media] Sử dụng prompt Veo 3: "${veoPrompt}"`);
@@ -45,8 +45,8 @@ export async function generateMedia(input: MediaGenInput) {
     
     if (fs.existsSync(path.join(process.cwd(), videoUrl))) {
       imageList.push(path.join(process.cwd(), videoUrl));
-    } else if (fs.existsSync(path.join(assetsDir, 'temp_broll.png'))) {
-      imageList.push(path.join(assetsDir, 'temp_broll.png'));
+    } else if (fs.existsSync(path.join(assetsDir, 'temp_broll.mp4'))) {
+      imageList.push(path.join(assetsDir, 'temp_broll.mp4'));
     }
 
     if (input.productImage && fs.existsSync(input.productImage)) {

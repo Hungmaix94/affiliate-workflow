@@ -77,7 +77,7 @@ def main():
         with open(script, "r", encoding="utf-8") as f:
             script = f.read()
     output_path = args.output
-    image_paths = [img.strip() for img in args.images.split(",") if os.path.exists(img.strip())]
+    image_paths = [img.strip() for img in args.images.split(",") if os.path.exists(img.strip()) and os.path.getsize(img.strip()) > 1000]
 
     if not image_paths:
         print("[VideoRenderer] ⚠️ No valid images provided. Falling back to default assets...")
@@ -89,7 +89,7 @@ def main():
             "assets/drill_action_wood.png",
             "assets/influencer_three_quarters.png"
         ]
-        image_paths = [img for img in default_assets if os.path.exists(img)]
+        image_paths = [img for img in default_assets if os.path.exists(img) and os.path.getsize(img) > 1000]
         if not image_paths:
             raise ValueError("No images found in assets directory to build video.")
 
@@ -141,7 +141,8 @@ def main():
             # 1.3 Choose image and check for talking face animation
             img_path = image_paths[i % len(image_paths)]
             
-            is_influencer = "influencer_face" in os.path.basename(img_path)
+            is_video = img_path.lower().endswith(('.mp4', '.avi', '.mov', '.mkv', '.webm'))
+            is_influencer = "influencer_face" in os.path.basename(img_path) and not is_video
             
             use_talking_lipsync = False
             temp_lipsync_video = None
@@ -228,7 +229,24 @@ def main():
             temp_segment = f"assets/temp_segment_{i}.mp4"
             temp_files.append(temp_segment)
             
-            if use_talking_lipsync:
+            if is_video:
+                video_filters = f"scale=1024:1024,vignette=PI/5,fade=t=in:st=0:d={fade_dur:.3f},fade=t=out:st={st_out:.3f}:d={fade_dur:.3f},format=yuv420p"
+                audio_filters = f"afade=t=in:st=0:d={fade_dur:.3f},afade=t=out:st={st_out:.3f}:d={fade_dur:.3f}"
+                ffmpeg_cmd = [
+                    "ffmpeg", "-y",
+                    "-stream_loop", "-1",
+                    "-i", img_path,
+                    "-i", temp_voice,
+                    "-map", "0:v",
+                    "-map", "1:a",
+                    "-vf", video_filters,
+                    "-af", audio_filters,
+                    "-c:v", "libx264", "-r", "25",
+                    "-c:a", "aac",
+                    "-t", f"{duration:.3f}",
+                    temp_segment
+                ]
+            elif use_talking_lipsync:
                 ffmpeg_cmd = [
                     "ffmpeg", "-y",
                     "-i", temp_lipsync_video,
